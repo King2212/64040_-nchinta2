@@ -1,0 +1,47 @@
+---
+title: "Untitled"
+output:
+  html_document: default
+  pdf_document: default
+date: "2022-09-15"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+chooseCRANmirror(graphics = getOption("menu.graphics"),ind = 89,local.only = FALSE)
+library(readxl)
+#Downloaded the Dataset From Kaggle 
+#and now I am importing the dataset to RStudio
+Book1 <- read.csv("~/ML/Book1.csv")
+View (Book1)
+
+# For recalling the vcd packages we used the library function
+library(vcd)
+
+#Now we are finding the mean,median,mode of one quantitative categorial variable
+mean(Book1$ODB.Rank)
+ median(Book1$ODB.Rank)
+ mode((Book1$ODB.Rank))
+ 
+ #Installing the package called dplyr
+ install.packages("dplyr")
+ #for recalling the installed packages we used the library function
+ library(dplyr)
+ 
+ #Here we are using select funtion for selecting 2 variables 
+select (Book1,ODB.Rank:ODB.Scaled)
+# Here we are using filter function to filter specific values in those 2 variables 
+filter(Book1,ODB.Rank ==36)
+filter(Book1,ODB.Scaled==58.07)
+#we are using arrange function for the country
+arrange(Book1, Country)
+#Summary fucntion is Used to get the summary of the dataset 
+summary(Book1)
+```
+```{r}
+#pllotting the scatter plot
+
+plot(Book1$ODB.Rank,Book1$ODB.Scaled)
+plot(Book1$ODB.Rank,Book1$ODB.Score)
+```
+```
