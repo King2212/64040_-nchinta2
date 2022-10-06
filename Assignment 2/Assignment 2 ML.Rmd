@@ -1,0 +1,111 @@
+---
+title: "Assignment 2"
+author: "NITHIN VARMA"
+date: "10/6/2022"
+output: html_document
+---
+
+```{r}
+library(caret)
+library(ISLR)
+library(dplyr)
+library(class)
+```
+
+```{r}
+Universal <- read.csv("C:/Users/Kittu Varma/Downloads/UniversalBank.csv")
+```
+
+
+```{r}
+#Performing a K-NN classification with all attributes except ID and ZIP code.
+Universal$ID <- NULL
+Universal$ZIP.Code <- NULL
+summary(Universal)
+Universal$Personal.Loan =  as.factor(Universal$Personal.Loan)
+```
+
+```{r}
+#Dividing into training and validation
+Model_norm <- preProcess(Universal[, -8],method = c("center", "scale"))
+summary(Universal)
+Universal_norm <- predict(Model_norm,Universal)
+summary(Universal_norm)
+
+Index_Train <- createDataPartition(Universal$Personal.Loan, p = 0.6, list = FALSE)
+Train = Universal_norm[Index_Train,]
+validation = Universal_norm[-Index_Train,]
+```
+
+```{r}
+#Prediction of data
+library(FNN)
+to_Predict = data.frame(Age = 40, Experience = 10, Income = 84, Family = 2,
+                     CCAvg = 2, Education = 1, Mortgage = 0, Securities.Account =
+                       0, CD.Account = 0, Online = 1, CreditCard = 1)
+print(to_Predict)
+Predict_Norm <- predict(Model_norm,to_Predict)
+Predictions <- knn(train= as.data.frame(Train[,1:7,9:12]),
+                  test = as.data.frame(Predict_Norm[,1:7,9:12]),
+                  cl= Train$Personal.Loan,
+                  k=1)
+```
+```
+#The customer is classified in classes "0","1"
+
+```{r}
+#QUESTION-2
+set.seed(123)
+Universal <- trainControl(method= "repeatedcv", number = 3, repeats = 2)
+searchGrid = expand.grid(k=1:10)
+knn.model = train(Personal.Loan~., data = Train, method = 'knn', tuneGrid = searchGrid,trControl = Universal)
+knn.model
+#The value of k is 3.This is the value that balances between overfitting and ignoring the predictor information
+```
+
+```{r}
+#QUESTION-3
+Universal_prediction <- predict(knn.model,validation)
+confusionMatrix(Universal_prediction,validation$Personal.Loan)
+#This matrix has a 94.5% accuracy.
+#This the confusion matrix for the validation data that results from using the best k.
+```
+
+
+```{r}
+#QUESTION-4
+ForPredictNorm = data.frame(Age = 40, Experience = 10, Income = 84, Family = 2,
+                              CCAvg = 2, Education = 1, Mortgage = 0,
+                              Securities.Account =0, CD.Account = 0, Online = 1,
+                              CreditCard = 1)
+ForPredictNorm = predict(Model_norm, ForPredictNorm)
+predict(knn.model, ForPredictNorm)
+#It results in level 0,1
+```
+
+```{r}
+#QUESTION-5
+#Creating Training, Test, and validation sets from the data collection.
+Train_size = 0.5 #training(50%)
+Train_Index = createDataPartition(Universal_norm$Personal.Loan, p = 0.5, list = FALSE)
+Train = Universal_norm[Train_Index,]
+
+valid_size = 0.3 #validation(30%)
+Validation_Index = createDataPartition(Universal_norm$Personal.Loan, p = 0.3, list = FALSE)
+validation = Universal_norm[Validation_Index,]
+
+Test_size = 0.2 #Test Data(20%)
+Test_Index = createDataPartition(Universal_norm$Personal.Loan, p = 0.2, list = FALSE)
+Test = Universal_norm[Test_Index,]
+
+
+Trainingknn <- knn(train = Train[,-8], test = Train[,-8], cl = Train[,8], k =3)
+Validknn <- knn(train = Train[,-8], test = validation[,-8], cl = Train[,8], k =3)
+Testingknn <- knn(train = Train[,-8], test = Test[,-8], cl = Train[,8], k =3)
+
+confusionMatrix(Trainingknn, Train[,8])
+confusionMatrix(Validknn, validation[,8])
+confusionMatrix(Testingknn, Test[,8])
+```
+
+#This is matrix and this is the whole assigment
