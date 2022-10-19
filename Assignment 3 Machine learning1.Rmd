@@ -1,0 +1,101 @@
+---
+title: "Assignment 3"
+author: "Nithin varma"
+date: "2022-10-19"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+library("readr")
+library("dplyr")
+library("caret")
+library("tidyr")
+library("e1071")
+library("reshape2")
+```
+
+```{r}
+ UniversalBank <- read.csv("C:/Users/Kittu Varma/Downloads/UniversalBank.csv")
+ summary(UniversalBank)
+```
+
+```{r}
+head(UniversalBank)
+UniversalBank$Personal.Loan <- as.factor(UniversalBank$Personal.Loan)
+UniversalBank$Online <- as.factor(UniversalBank$Online)
+UniversalBank$CreditCard <- as.factor(UniversalBank$CreditCard)
+```
+
+```{r}
+#Setting Seed and Partition the data into training (60%) and validation (40%) sets. 
+set.seed(2022)
+training_data_index = createDataPartition(UniversalBank$Personal.Loan, p=.6, list = F) #60% training data
+training_data_df = UniversalBank[training_data_index,]
+validation_data_df = UniversalBank[-training_data_index,] #Validation Data
+```
+
+```{r}
+#Task A: Pivot table
+melt_UniversalBank = melt(training_data_df, id=c("CreditCard","Personal.Loan"), variable = "Online") #function melt() 
+dcast_UniversalBank = dcast(melt_UniversalBank, CreditCard+Personal.Loan~Online) #function cast()
+dcast_UniversalBank[,c(1:2,14)] 
+# CreditCard, Personal.Loan, Online DF
+```
+
+```{r}
+#Task B:
+#Answer=  probability of the customer accepting the loan offer is calculated as 93/3000 that is 3.1%
+```
+
+```{r}
+#Task C: 
+loan_melt_UniversalBank = melt(training_data_df, id=c("Personal.Loan"), variable = "Online")
+cc_melt_UniversalBank = melt(training_data_df, id=c("CreditCard"), variable = "Online")
+dcast_loan_UniversalBank = dcast(loan_melt_UniversalBank, Personal.Loan~Online)
+dcast_cc_UniversalBank = dcast(cc_melt_UniversalBank, CreditCard~Online)
+dcast_loan_UniversalBank[,c(1,13)]
+dcast_cc_UniversalBank[,c(1,14)]
+```
+
+```{r}
+#Task D
+#1. P(CC = 1 | Loan = 1) (the proportion of credit card holders between the loan acceptors)
+#calculation= 93/(93+195) is = to 32.29%
+table(training_data_df[,c(14,10)])
+#2. P(Online = 1 | Loan = 1)  
+#Calculation: 179/(179+109) is = to 62.15%
+table(training_data_df[,c(13,10)])
+#3. P(Loan = 1) (the proportion of loan acceptors) 
+#Calculation: 288/(288+2712) is = to 9.6%
+table(training_data_df[c(10)])
+#4. P(CC = 1 | Loan = 0)  
+#Calculation: 788/(788+1924) is = to 29% 
+#5. P(Online = 1 | Loan = 0)
+#Calculation: 1631/(1631+1081) = 60%
+#6. P(Loan = 0)
+#Calculation: 2712/(2712+288) = 90.4% 
+```
+
+```{r}
+#Task F: 
+#Answer is  0.1 which is approximately same as the calculation done in Task E.
+#Independent variables were required for the calculated method in this answer mainly to predict 
+#But, we don't require the Independent varialbles for Naive Bayes
+```
+
+```{r}
+#Task G
+train_naive_bayes = training_data_df[,c(10,13:14)]
+naive_bayes = naiveBayes(Personal.Loan~., data=train_naive_bayes)
+naive_bayes
+```
+
+
+
+
+
