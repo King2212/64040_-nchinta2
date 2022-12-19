@@ -1,0 +1,179 @@
+---
+title: "Finalproject"
+output:
+  html_document: default
+  pdf_document: default
+date: "2022-12-18"
+---
+```{r}
+library(dplyr)
+library(gtools)
+library(gmodels)
+library(ggplot2)
+library(class)
+library(tidyr)
+library(lattice)
+library(caret)
+library(rmdformats)
+library(rpart)
+library(rattle)
+library(pROC)
+library(rpart.plot)
+library(latexpdf)
+```
+
+```{r}
+heart_dataset <- read.csv("C:/Users/ganes/Downloads/heart (2).csv")
+
+```
+
+```{r}
+summary(heart_dataset)
+```
+```{r}
+head(heart_dataset)
+```
+
+```{r}
+x <- heart_dataset$age
+y <- heart_dataset$chol
+# Plot with main and axis titles
+# Change point shape (pch = 19) and remove frame.
+plot(x, y, main = "Scatter plot",
+     xlab = "age", ylab = "chol")
+```
+
+```{r}
+boxplot(heart_dataset$chol)
+```
+
+
+```{r}
+# Create dummy variable
+
+dummy <- dummyVars("~target + sex +cp + trestbps + chol + fbs + restecg + thalach + exang + oldpeak + slope + ca + thal", data = heart_dataset)
+
+# Create new data frame
+
+dummy <- data.frame(predict(dummy, newdata = heart_dataset))
+
+# Check our data frame structure
+
+str(dummy)
+```
+
+```{r}
+dummy$target.Health <- NULL
+dummy$sex.female <- NULL
+dummy$fbs.False <- NULL
+dummy$exang.No <- NULL
+head(dummy)
+```
+
+```{r}
+prop.table(table(heart_dataset$target))
+```
+
+```{r}
+
+set.seed(123)
+index <- sample(nrow(heart_dataset), nrow(heart_dataset)*0.8)
+
+# Data train
+train_heart <- heart_dataset[index,]
+
+# Data test
+test_heart <- heart_dataset[-index,]
+set.seed(123)
+
+# Predictor
+
+train_x <- dummy[index, -1]
+test_x <- dummy[-index, -1]
+
+# Target
+
+train_y <- dummy[index, 1]
+test_y <- dummy[-index, 1]
+```
+
+
+```{r}
+sqrt(nrow(train_x))
+```
+```{r}
+train_x <- scale(x = train_x)
+test_x <- scale(x = test_x, center = attr(train_x, "scaled:center"), scale = attr(train_x, "scaled:scale"))
+head(test_x)
+```
+```{r}
+set.seed(123)
+Index<- createDataPartition(heart_dataset$target,p=0.8,list=FALSE)
+Train_data<-heart_dataset [Index,]
+Validation_data <- heart_dataset[-Index,]
+```
+
+
+```{r}
+set.seed(123)
+train_x <- scale(x = train_x)
+test_x <- scale(x = test_x, center = attr(train_x, "scaled:center"), scale = attr(train_x, "scaled:scale"))
+
+pred_knn <- knn(train = train_x, test = test_x, cl = train_y, k = 28)
+```
+
+```{r}
+pred_knn <- pred_knn %>%
+  as.data.frame() %>%
+  mutate(pred_knn = factor(pred_knn, levels = c(0,1), labels = c("Health", "Not Health"))) %>%
+  select(pred_knn)
+```
+
+```{r}
+test_y <- test_y %>%
+  as.data.frame() %>%
+  mutate(target = factor(test_y, levels = c(0,1), labels = c("Health", "Not Health"))) %>%
+  select(target)
+```
+
+```{r}
+conf_mat_knn <- confusionMatrix(pred_knn$pred_knn, reference = test_y$target, positive = "Not Health")
+
+conf_mat_knn
+
+```
+
+
+
+```{r}
+set.seed(123)
+Decision_model <- rpart(target~., data=Train_data,method='class')
+head(Decision_model$splits)
+```
+
+```{r}
+library(caret)
+prob_decision_tree <- predict(Decision_model, newdata = Validation_data, type="prob")
+roc(Validation_data$target, prob_decision_tree[,2])
+
+class_decision_tree <- predict(Decision_model, newdata = Validation_data, type="class")
+confusionMatrix(as.factor(class_decision_tree), as.factor(Validation_data$target))
+```
+
+```{r}
+library(rpart)
+library(rpart.plot)
+Heart_Model <- rpart(target~. ,data=heart_dataset, method="class")
+head(Heart_Model)
+
+fancyRpartPlot(Heart_Model)
+rpart.plot(Heart_Model, cex=0.5)
+```
+
+```{r}
+library(pROC)
+prob_decision_tree <- predict(Heart_Model, newdata = heart_dataset, type = "prob")
+
+roc(heart_dataset$target, prob_decision_tree[,2])
+
+```
